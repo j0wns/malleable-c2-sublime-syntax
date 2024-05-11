@@ -1,0 +1,280 @@
+%YAML 1.2
+---
+# Author: j0wns
+# See http://www.sublimetext.com/docs/syntax.html
+name: Malleable C2
+file_extensions: [profile]
+# hidden_file_extenstions: []
+# first_line_match: "# Malleable C2"
+scope: source.malleable-c2
+version: 4.9  # CS Version
+# extends: Packages/C++/C.sublime-syntax # It's unclear how to determing Package/Path or if I want to
+# hidden: # Hidden Syntax Definitions wont be shown in the menu but can still be assigned...
+contexts:
+
+
+#####################################################################
+# Constants
+#####################################################################
+
+  special_values:
+    - match: '[\\]n'
+      scope: constant.character.malleable-c2
+    - match: '[\\]r'
+      scope: constant.character.malleable-c2
+    - match: '[\\]t'
+      scope: constant.character.malleable-c2
+    - match: '[\\]u'
+      scope: constant.character.malleable-c2
+      push: unicode_char
+    - match: '[\\]x'
+      scope: constant.character.malleable-c2
+      push: hex_char
+    - match: '[\\][\\]'
+      scope: constant.character.malleable-c2
+    - match: '\[[a-zA-Z0-9|]+\]'
+    # - match: '\[[a-zA-Z0-9|!\*\(\);:@&,/?%#]+\]'
+    # - match: "[^-\]_.~!*'();:@&=+$,/?%#[A-z0-9]"
+      scope: constant.language
+
+# URL Test @"[^-\]_.~!*'();:@&=+$,/?%#[A-z0-9]"
+
+  # dynamic_syntax:
+  #   - match: '\[(|.*)\]'
+
+  substr_highlighting:
+    # Boolean
+    - match: '\b(true|false)\b'
+      scope: constant.language.malleable-c2
+
+    # Numerical Values
+    - match: '(?<=")([0-9]+\.?[0-9]*)(?=")'
+      scope: constant.numeric.malleable-c2
+
+    # # IPv4 Strings
+    # - match: '\b[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\b'
+    #   scope: constant.numeric.line-number.match.malleable-c2
+
+    # Boolean
+    - match: '[#]+'
+      scope: constant.numeric.malleable-c2
+
+
+  unicode_char:
+    - match: '[[:xdigit:]][[:xdigit:]][[:xdigit:]][[:xdigit:]]'
+      scope: constant.numeric.malleable-c2
+      pop: true
+
+  hex_char:
+    - match: '[[:xdigit:]][[:xdigit:]]'
+      scope: constant.numeric.malleable-c2
+      pop: true
+
+
+#####################################################################
+# Generic Structures
+#####################################################################
+
+  comments:
+    # Comments begin with a # and go until the end of the line.
+    - match: '#'
+      scope: comment.malleable-c2
+      push: line_comment
+
+  line_comment:
+    - meta_scope: comment.malleable-c2
+    - match: $
+      pop: true
+
+  blocks:
+    # Profiles use '{}' to group statements and information together.
+    - match: '^\s*([a-z-0-9]+)\s*({)'
+      captures:
+        1: support.function.malleable-c2
+        2: punctuation.section
+    - match: '}'
+      scope: punctuation.section
+
+
+
+#####################################################################
+# Malleable C2 Objects
+#####################################################################
+
+  options:
+    # The SET statement is a way to assign a value to an option.
+    # - match: '^(set)\s+([[:word:]]+)\s+(")'
+    - match: '^\s*(set)\s+([[:word:]]+)\s+(?=")'
+      captures:
+        1: keyword.operator.word.malleable-c2
+        2: keyword.declaration.malleable-c2
+        3: punctuation.definition.string.begin.malleable-c2
+      push: option_values
+
+  option_values:
+    - meta_scope: string.quoted.double.malleable-c2
+    - include: special_values
+    - include: substr_highlighting
+    - match: '"'
+      scope: punctuation.definition.string.end.malleable-c2
+    # Statements always end with a semicolon
+    # - match: ';'
+    - match: '(?<=")\s*;\s*'
+    # - match: '(?<=")\s*;\s*(?=#.*$)'
+      scope: keyword.operator.word.malleable-c2
+      pop: true
+
+
+  headers:
+    # - match: '^\s*(header)\s+(")([[:word:]]+)(")\s+(")'
+    # - match: '^\s*(header)\s+(")([[:word:]]+)'
+    - match: '^\s*(header|parameter|strrep)\s+(")([ a-z-A-Z]+)(")\s*(")'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: punctuation.definition.string.begin.malleable-c2
+        3: keyword.operator.word.malleable-c2
+        4: punctuation.definition.string.end.malleable-c2
+        5: punctuation.definition.string.begin.malleable-c2
+        # 5: constant.language.malleable-c2
+      push: header_values
+
+  header_values:
+    - meta_scope: string.quoted.double.malleable-c2
+    - include: special_values
+    - include: substr_highlighting
+    - match: '"'
+      scope: punctuation.definition.string.end.malleable-c2
+    # Statements always end with a semicolon
+    # - match: '(?<=");'
+    - match: '(?<=")\s*;\s*$'
+      scope: keyword.operator.word.malleable-c2
+      pop: true
+
+
+  str_vars:
+    # - match: '^\s*(header)\s+(")([[:word:]]+)(")\s+(")'
+    # - match: '^\s*(header)\s+(")([[:word:]]+)'
+    # - match: '^\s*(CreateThread|prepend|append)\s+(")([ a-z-A-Z]+)(")\s*(")'
+    - match: '^\s*(CreateThread|stringw|string)\s+(")'
+    # - match: '^\s*(append)\s+(")'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: punctuation.definition.string.begin.malleable-c2
+        # 3: keyword.operator.word.malleable-c2
+        # 4: punctuation.definition.string.end.malleable-c2
+        # 5: punctuation.definition.string.begin.malleable-c2
+        # 5: constant.language.malleable-c2
+      push: str_var_values
+
+  str_var_values:
+    - meta_scope: string.quoted.double.malleable-c2
+    - include: special_values
+    - include: substr_highlighting
+    - match: '"'
+      scope: punctuation.definition.string.end.malleable-c2
+    # Statements always end with a semicolon
+    - match: '(?<=")\s*;\s*$'
+      scope: keyword.operator.word.malleable-c2
+      pop: true
+
+
+  data_transform_vars:
+    - match: '^\s*(append|prepend)\s+(")'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: punctuation.definition.string.begin.malleable-c2
+      push: data_transform_var_values
+
+    - match: '^\s*(base64|base64url|mask|netbios|netbiosu)\s*(;)'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: keyword.operator.word.malleable-c2
+
+
+  data_transform_var_values:
+    - meta_scope: string.quoted.double.malleable-c2
+    - include: special_values
+    - include: substr_highlighting
+
+    - match: '"'
+      scope: punctuation.definition.string.end.malleable-c2
+
+    # Statements always end with a semicolon
+    - match: '(?<=")\s*;\s*$'
+      scope: keyword.operator.word.malleable-c2
+      pop: true
+
+  data_transform_termination_statements:
+    - match: '^\s*(header|parameter)\s+(")'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: punctuation.definition.string.begin.malleable-c2
+      push: str_var_values
+
+    - match: '^\s*(print|uri-append)\s*(;)'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: keyword.operator.word.malleable-c2
+
+
+  termination_statements_values:
+    - meta_scope: string.quoted.double.malleable-c2
+    - include: special_values
+    - include: substr_highlighting
+    - match: '"'
+      scope: punctuation.definition.string.end.malleable-c2
+
+    # Statements always end with a semicolon
+    - match: '(?<=")\s*;\s*$'
+      scope: keyword.operator.word.malleable-c2
+      pop: true
+
+  process_inject_vars:
+    # - match: '^\s*(header|parameter)\s+(")'
+    #   captures:
+    #     1: keyword.declaration.malleable-c2
+    #     2: punctuation.definition.string.begin.malleable-c2
+    #   push: str_var_values
+
+    - match: '^\s*(print|uri-append)\s*(;)'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: keyword.operator.word.malleable-c2
+
+  post_ex_vars:
+    # - match: '^\s*(header|parameter)\s+(")'
+    #   captures:
+    #     1: keyword.declaration.malleable-c2
+    #     2: punctuation.definition.string.begin.malleable-c2
+    #   push: str_var_values
+
+    - match: '^\s*(SetThreadContext|CreateRemoteThread|RtlCreateUserThread)\s*(;)'
+      captures:
+        1: keyword.declaration.malleable-c2
+        2: keyword.operator.word.malleable-c2
+
+
+
+#####################################################################
+# Main Context
+#####################################################################
+
+
+
+  main:
+    # - meta_scope: constant.language # This assigned the given scope to all text within this context
+    # - meta_content_scope: foo
+    # - meta_include_prototype: foo
+    # - clear_scopes: foo
+    # - meta_prepend: foo
+    # - meta_append: foo
+
+    - include: comments
+    - include: options
+    - include: blocks
+    - include: headers
+    - include: str_vars
+    - include: data_transform_vars
+    - include: data_transform_termination_statements
+    - include: process_inject_vars
+    - include: post_ex_vars
